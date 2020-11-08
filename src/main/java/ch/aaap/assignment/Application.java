@@ -10,6 +10,7 @@ import ch.aaap.assignment.model.District;
 import ch.aaap.assignment.model.DistrictImpl;
 import ch.aaap.assignment.model.Model;
 import ch.aaap.assignment.model.ModelImpl;
+import ch.aaap.assignment.model.PoliticalCommunity;
 import ch.aaap.assignment.model.PoliticalCommunityImpl;
 import ch.aaap.assignment.model.PostalCommunity;
 import ch.aaap.assignment.model.PostalCommunityImpl;
@@ -172,20 +173,15 @@ public class Application {
    */
   public LocalDate getLastUpdateOfPoliticalCommunityByPostalCommunityName(
       String postalCommunityName) {
-//    var postalCommunity = this.model.getPostalCommunities()
-//        .stream()
-//        .filter(c -> c.getName().equals(postalCommunityName))
-//        .findAny()
-//        .orElseThrow(() -> new IllegalArgumentException(
-//            "unknown postal community name: " + postalCommunityName));
-//
-//    return this.model.getPoliticalCommunities()
-//        .stream()
-//        .filter(c -> postalCommunity.getPoliticalCommunityNumbers().contains(c.getNumber()))
-//        .map(PoliticalCommunity::getLastUpdate)
-//        .findAny()
-//        .orElseThrow();
-    return LocalDate.now();
+    return this.model.getPoliticalCommunities()
+        .stream()
+        .filter(political -> political.getPostalCommunities().stream()
+            .anyMatch(postal -> postal.getName().equals(postalCommunityName)))
+        .map(PoliticalCommunity::getLastUpdate)
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException(
+            "no matching political community found for postal community name: "
+                + postalCommunityName));
   }
 
   /**
