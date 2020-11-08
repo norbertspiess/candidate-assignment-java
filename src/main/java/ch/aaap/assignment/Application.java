@@ -141,20 +141,13 @@ public class Application {
    * @return amount of districts in given canton
    */
   public long getAmountOfPoliticalCommunitiesInDistrict(String districtNumber) {
-//    return model.getDistricts()
-//        .stream().filter(d -> d.getNumber().equals(districtNumber))
-//        .mapToLong(d -> d.getPostalCommunities().size())
-//        .sum();
-
-//    if (isUnknownDistrictNumber) {
-//      throw new IllegalArgumentException("invalid district number: " + districtNumber);
-//    }
-//
-//    return model.getPoliticalCommunities()
-//        .stream()
-//        .filter(c -> districtNumber.equals(c.getDistrictNumber()))
-//        .count();
-    return 0;
+    return this.model.getDistricts()
+        .stream()
+        .filter(d -> d.getNumber().equals(districtNumber))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("invalid district number: " + districtNumber))
+        .getPoliticalCommunities()
+        .size();
   }
 
   /**
