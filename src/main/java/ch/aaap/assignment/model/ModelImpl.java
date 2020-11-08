@@ -28,29 +28,26 @@ public class ModelImpl implements Model {
             .build())
         .collect(toSet());
 
-    this.districts = exractDistricts();
+    this.districts = extractDistricts();
   }
 
-  private Set<District> exractDistricts() {
+  private Set<District> extractDistricts() {
     var communitiesByDistrictNumber = this.politicalCommunities
-        .stream()
-        .collect(groupingBy(PoliticalCommunity::getDistrictNumber));
-    return communitiesByDistrictNumber
-        .entrySet().stream()
-        .map(district -> {
-          var districtNumber = district.getKey();
-          var districtName = district.getValue().get(0).getDistrictName();
-          var communityNumbers = district.getValue()
-              .stream()
-              .map(PoliticalCommunity::getNumber)
-              .collect(toSet());
+        .stream().collect(groupingBy(PoliticalCommunity::getDistrictNumber));
 
-          return DistrictImpl.builder()
-              .number(districtNumber)
-              .name(districtName)
-              .communityNumbers(communityNumbers)
-              .build();
-        })
+    // districts can be part of multiple communities, so we have to gather those
+    return communitiesByDistrictNumber
+        .values().stream()
+        .map(communities ->
+            DistrictImpl.builder()
+                .number(communities.get(0).getDistrictNumber())
+                .name(communities.get(0).getDistrictName())
+                .communityNumbers(communities
+                    .stream()
+                    .map(PoliticalCommunity::getNumber)
+                    .collect(toSet()))
+                .build()
+        )
         .collect(toSet());
   }
 

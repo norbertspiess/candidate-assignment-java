@@ -35,7 +35,7 @@ public class Application {
     var politicalCommunities = CSVUtil.getPoliticalCommunities();
     var postalCommunities = CSVUtil.getPostalCommunities();
 
-    Set<PoliticalCommunity> internalPoliticalCommunities = politicalCommunities
+    var internalPoliticalCommunities = politicalCommunities
         .stream()
         .map(c -> PoliticalCommunityImpl
             .builder()
@@ -48,29 +48,27 @@ public class Application {
             .districtName(c.getDistrictName())
             .districtNumber(c.getDistrictNumber())
             .build())
+        .map(PoliticalCommunity.class::cast)
         .collect(toSet());
 
+    // zip codes can belong to multiple political communities
     var postalCommunitiesByZipCode = postalCommunities
         .stream().collect(groupingBy(c -> c.getZipCode() + c.getZipCodeAddition()));
-    Set<PostalCommunity> internalPostalCommunities = postalCommunitiesByZipCode.values()
+    var internalPostalCommunities = postalCommunitiesByZipCode.values()
         .stream()
-        .map(communities -> {
-          var zipCode = communities.get(0).getZipCode();
-          var zipCodeAddition = communities.get(0).getZipCodeAddition();
-          var name = communities.get(0).getName();
-          var communityNumbers = communities
-              .stream()
-              .map(CSVPostalCommunity::getPoliticalCommunityNumber)
-              .collect(toSet());
-
-          return PostalCommunityImpl
-              .builder()
-              .zipCode(zipCode)
-              .zipCodeAddition(zipCodeAddition)
-              .name(name)
-              .politicalCommunityNumbers(communityNumbers)
-              .build();
-        })
+        .map(communities -> PostalCommunityImpl
+            .builder()
+            .zipCode(communities.get(0).getZipCode())
+            .zipCodeAddition(communities.get(0).getZipCodeAddition())
+            .name(communities.get(0).getName())
+            .politicalCommunityNumbers(
+                communities
+                    .stream()
+                    .map(CSVPostalCommunity::getPoliticalCommunityNumber)
+                    .collect(toSet())
+            )
+            .build())
+        .map(PostalCommunity.class::cast)
         .collect(toSet());
 
     this.model = new ModelImpl(internalPoliticalCommunities, internalPostalCommunities);
