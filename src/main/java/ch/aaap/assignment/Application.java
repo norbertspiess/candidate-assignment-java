@@ -3,6 +3,7 @@ package ch.aaap.assignment;
 import static java.util.stream.Collectors.toSet;
 
 import ch.aaap.assignment.model.Canton;
+import ch.aaap.assignment.model.District;
 import ch.aaap.assignment.model.Model;
 import ch.aaap.assignment.model.ModelImpl;
 import ch.aaap.assignment.model.PoliticalCommunity;
@@ -81,7 +82,12 @@ public class Application {
   }
 
   private void rejectInvalidCantonCode(String cantonCode) {
-    if (model.getCantons().stream().map(Canton::getCode).noneMatch(c -> c.equals(cantonCode))) {
+    var isUnknownCantonCode = model.getCantons()
+        .stream()
+        .map(Canton::getCode)
+        .noneMatch(c -> c.equals(cantonCode));
+
+    if (isUnknownCantonCode) {
       throw new IllegalArgumentException("invalid canton code: " + cantonCode);
     }
   }
@@ -107,8 +113,19 @@ public class Application {
    * @return amount of districts in given canton
    */
   public long getAmountOfPoliticalCommunitiesInDistrict(String districtNumber) {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    var isUnknownDistrictNumber = model.getDistricts()
+        .stream()
+        .map(District::getNumber)
+        .noneMatch(nr -> nr.equals(districtNumber));
+
+    if (isUnknownDistrictNumber) {
+      throw new IllegalArgumentException("invalid district number: " + districtNumber);
+    }
+
+    return model.getPoliticalCommunities()
+        .stream()
+        .filter(c -> districtNumber.equals(c.getDistrictNumber()))
+        .count();
   }
 
   /**
