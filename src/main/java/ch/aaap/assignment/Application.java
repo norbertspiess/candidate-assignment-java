@@ -2,6 +2,7 @@ package ch.aaap.assignment;
 
 import static java.util.stream.Collectors.toSet;
 
+import ch.aaap.assignment.model.Canton;
 import ch.aaap.assignment.model.Model;
 import ch.aaap.assignment.model.ModelImpl;
 import ch.aaap.assignment.model.PoliticalCommunity;
@@ -68,10 +69,17 @@ public class Application {
   /**
    * @param cantonCode of a canton (e.g. ZH)
    * @return amount of political communities in given canton
+   * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfPoliticalCommunitiesInCanton(String cantonCode) {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    if (model.getCantons().stream().map(Canton::getCode).noneMatch(c -> c.equals(cantonCode))) {
+      throw new IllegalArgumentException("invalid canton code: " + cantonCode);
+    }
+
+    return model.getPoliticalCommunities()
+        .stream()
+        .filter(c -> cantonCode.equals(c.getCantonCode()))
+        .count();
   }
 
   /**
