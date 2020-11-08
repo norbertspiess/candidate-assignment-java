@@ -1,10 +1,13 @@
 package ch.aaap.assignment.model;
 
+import java.util.Set;
+
 public interface Canton {
 
   String getCode();
 
   String getName();
 
-  // TODO add more features here representing the relations
+  Set<District> getDistricts();
+
 }

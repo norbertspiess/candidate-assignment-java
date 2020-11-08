@@ -1,6 +1,7 @@
 package ch.aaap.assignment.model;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 public interface PoliticalCommunity {
 
@@ -12,13 +13,6 @@ public interface PoliticalCommunity {
 
   LocalDate getLastUpdate();
 
-  String getCantonCode();
+  Set<PostalCommunity> getPostalCommunities();
 
-  String getCantonName();
-
-  String getDistrictName();
-
-  String getDistrictNumber();
-
-  // TODO add more features here representing the relations
 }

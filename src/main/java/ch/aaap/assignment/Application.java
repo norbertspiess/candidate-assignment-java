@@ -1,19 +1,26 @@
 package ch.aaap.assignment;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import ch.aaap.assignment.model.Canton;
+import ch.aaap.assignment.model.CantonImpl;
 import ch.aaap.assignment.model.District;
+import ch.aaap.assignment.model.DistrictImpl;
 import ch.aaap.assignment.model.Model;
 import ch.aaap.assignment.model.ModelImpl;
-import ch.aaap.assignment.model.PoliticalCommunity;
 import ch.aaap.assignment.model.PoliticalCommunityImpl;
 import ch.aaap.assignment.model.PostalCommunity;
 import ch.aaap.assignment.model.PostalCommunityImpl;
+import ch.aaap.assignment.raw.CSVPoliticalCommunity;
 import ch.aaap.assignment.raw.CSVPostalCommunity;
 import ch.aaap.assignment.raw.CSVUtil;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class Application {
@@ -35,43 +42,59 @@ public class Application {
     var politicalCommunities = CSVUtil.getPoliticalCommunities();
     var postalCommunities = CSVUtil.getPostalCommunities();
 
-    var internalPoliticalCommunities = politicalCommunities
+    var postalCommunitiesByPoliticalCommunity = postalCommunities
         .stream()
-        .map(c -> PoliticalCommunityImpl
-            .builder()
-            .number(c.getNumber())
-            .name(c.getName())
-            .shortName(c.getShortName())
-            .lastUpdate(c.getLastUpdate())
-            .cantonCode(c.getCantonCode())
-            .cantonName(c.getCantonName())
-            .districtName(c.getDistrictName())
-            .districtNumber(c.getDistrictNumber())
-            .build())
-        .map(PoliticalCommunity.class::cast)
-        .collect(toSet());
-
-    // zip codes can belong to multiple political communities
-    var postalCommunitiesByZipCode = postalCommunities
-        .stream().collect(groupingBy(c -> c.getZipCode() + c.getZipCodeAddition()));
-    var internalPostalCommunities = postalCommunitiesByZipCode.values()
+        .collect(groupingBy(CSVPostalCommunity::getPoliticalCommunityNumber))
+        .entrySet()
         .stream()
-        .map(communities -> PostalCommunityImpl
-            .builder()
-            .zipCode(communities.get(0).getZipCode())
-            .zipCodeAddition(communities.get(0).getZipCodeAddition())
-            .name(communities.get(0).getName())
-            .politicalCommunityNumbers(
-                communities
-                    .stream()
-                    .map(CSVPostalCommunity::getPoliticalCommunityNumber)
-                    .collect(toSet())
-            )
-            .build())
-        .map(PostalCommunity.class::cast)
-        .collect(toSet());
+        .collect(toMap(
+            Entry::getKey,
+            e -> e.getValue()
+                .stream()
+                .map(c -> PostalCommunityImpl.builder()
+                    .zipCode(c.getZipCode())
+                    .zipCodeAddition(c.getZipCodeAddition())
+                    .name(c.getName())
+                    .build())
+                .map(PostalCommunity.class::cast)
+                .collect(toSet())));
 
-    this.model = new ModelImpl(internalPoliticalCommunities, internalPostalCommunities);
+    var cantonsByCode = new HashMap<String, Canton>();
+    var districtsByNumber = new HashMap<String, District>();
+    for (CSVPoliticalCommunity csvPoliticalCommunity : politicalCommunities) {
+      var matchingPostalCommunities = postalCommunitiesByPoliticalCommunity
+          .getOrDefault(csvPoliticalCommunity.getNumber(), Collections.emptySet());
+
+      var politicalCommunity = PoliticalCommunityImpl.builder()
+          .name(csvPoliticalCommunity.getName())
+          .lastUpdate(csvPoliticalCommunity.getLastUpdate())
+          .number(csvPoliticalCommunity.getNumber())
+          .shortName(csvPoliticalCommunity.getShortName())
+          .postalCommunities(matchingPostalCommunities)
+          .build();
+
+      var district = districtsByNumber.getOrDefault(
+          csvPoliticalCommunity.getDistrictNumber(),
+          DistrictImpl.builder()
+              .number(csvPoliticalCommunity.getDistrictNumber())
+              .name(csvPoliticalCommunity.getDistrictName())
+              .politicalCommunities(new HashSet<>())
+              .build());
+      district.getPoliticalCommunities().add(politicalCommunity);
+      districtsByNumber.putIfAbsent(district.getNumber(), district);
+
+      var canton = cantonsByCode.getOrDefault(
+          csvPoliticalCommunity.getCantonCode(),
+          CantonImpl.builder()
+              .code(csvPoliticalCommunity.getCantonCode())
+              .name(csvPoliticalCommunity.getCantonName())
+              .districts(new HashSet<>())
+              .build());
+      canton.getDistricts().add(district);
+      cantonsByCode.putIfAbsent(canton.getCode(), canton);
+    }
+
+    this.model = new ModelImpl(cantonsByCode.values());
   }
 
   /**
@@ -87,12 +110,14 @@ public class Application {
    * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfPoliticalCommunitiesInCanton(String cantonCode) {
-    rejectInvalidCantonCode(cantonCode);
-
-    return model.getPoliticalCommunities()
-        .stream()
-        .filter(c -> cantonCode.equals(c.getCantonCode()))
-        .count();
+//    rejectInvalidCantonCode(cantonCode);
+//    return model.getCantons()
+//        .stream()
+//        .filter(c -> c.getCode().equals(cantonCode))
+//        .flatMap(c -> c.getDistricts().stream())
+//        .mapToLong(d -> d.getPoliticalCommunities().size())
+//        .sum();
+    return 0;
   }
 
   private void rejectInvalidCantonCode(String cantonCode) {
@@ -114,12 +139,10 @@ public class Application {
   public long getAmountOfDistrictsInCanton(String cantonCode) {
     rejectInvalidCantonCode(cantonCode);
 
-    return model.getPoliticalCommunities()
+    return this.model.getCantons()
         .stream()
-        .filter(c -> cantonCode.equals(c.getCantonCode()))
-        .map(PoliticalCommunity::getDistrictNumber)
-        .distinct()
-        .count();
+        .filter(c -> c.getCode().equals(cantonCode))
+        .mapToLong(c -> c.getDistricts().size()).sum();
   }
 
   /**
@@ -127,19 +150,20 @@ public class Application {
    * @return amount of districts in given canton
    */
   public long getAmountOfPoliticalCommunitiesInDistrict(String districtNumber) {
-    var isUnknownDistrictNumber = model.getDistricts()
-        .stream()
-        .map(District::getNumber)
-        .noneMatch(nr -> nr.equals(districtNumber));
+//    return model.getDistricts()
+//        .stream().filter(d -> d.getNumber().equals(districtNumber))
+//        .mapToLong(d -> d.getPostalCommunities().size())
+//        .sum();
 
-    if (isUnknownDistrictNumber) {
-      throw new IllegalArgumentException("invalid district number: " + districtNumber);
-    }
-
-    return model.getPoliticalCommunities()
-        .stream()
-        .filter(c -> districtNumber.equals(c.getDistrictNumber()))
-        .count();
+//    if (isUnknownDistrictNumber) {
+//      throw new IllegalArgumentException("invalid district number: " + districtNumber);
+//    }
+//
+//    return model.getPoliticalCommunities()
+//        .stream()
+//        .filter(c -> districtNumber.equals(c.getDistrictNumber()))
+//        .count();
+    return 0;
   }
 
   /**
@@ -147,17 +171,18 @@ public class Application {
    * @return district that belongs to specified zip code
    */
   public Set<String> getDistrictsForZipCode(String zipCode) {
-    var communityNumbersForZipCode = this.model.getPostalCommunities()
-        .stream()
-        .filter(c -> c.getZipCode().equals(zipCode))
-        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
-        .collect(toSet());
-
-    return this.model.getDistricts()
-        .stream()
-        .filter(district -> doIntersect(district.getCommunityNumbers(), communityNumbersForZipCode))
-        .map(District::getName)
-        .collect(toSet());
+//    var communityNumbersForZipCode = this.model.getPostalCommunities()
+//        .stream()
+//        .filter(c -> c.getZipCode().equals(zipCode))
+//        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
+//        .collect(toSet());
+//
+//    return this.model.getDistricts()
+//        .stream()
+//        .filter(district -> doIntersect(district.getCommunityNumbers(), communityNumbersForZipCode))
+//        .map(District::getName)
+//        .collect(toSet());
+    return Set.of();
   }
 
   private boolean doIntersect(Set<String> set1, Set<String> set2) {
@@ -170,19 +195,20 @@ public class Application {
    */
   public LocalDate getLastUpdateOfPoliticalCommunityByPostalCommunityName(
       String postalCommunityName) {
-    var postalCommunity = this.model.getPostalCommunities()
-        .stream()
-        .filter(c -> c.getName().equals(postalCommunityName))
-        .findAny()
-        .orElseThrow(() -> new IllegalArgumentException(
-            "unknown postal community name: " + postalCommunityName));
-
-    return this.model.getPoliticalCommunities()
-        .stream()
-        .filter(c -> postalCommunity.getPoliticalCommunityNumbers().contains(c.getNumber()))
-        .map(PoliticalCommunity::getLastUpdate)
-        .findAny()
-        .orElseThrow();
+//    var postalCommunity = this.model.getPostalCommunities()
+//        .stream()
+//        .filter(c -> c.getName().equals(postalCommunityName))
+//        .findAny()
+//        .orElseThrow(() -> new IllegalArgumentException(
+//            "unknown postal community name: " + postalCommunityName));
+//
+//    return this.model.getPoliticalCommunities()
+//        .stream()
+//        .filter(c -> postalCommunity.getPoliticalCommunityNumbers().contains(c.getNumber()))
+//        .map(PoliticalCommunity::getLastUpdate)
+//        .findAny()
+//        .orElseThrow();
+    return LocalDate.now();
   }
 
   /**
@@ -200,14 +226,15 @@ public class Application {
    * @return amount of political communities without postal communities
    */
   public long getAmountOfPoliticalCommunityWithoutPostalCommunities() {
-    var communityNumbersFromPostalCommunities = this.model.getPostalCommunities()
-        .stream()
-        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
-        .collect(toSet());
-
-    return this.model.getPoliticalCommunities()
-        .stream()
-        .filter(c -> !communityNumbersFromPostalCommunities.contains(c.getNumber()))
-        .count();
+//    var communityNumbersFromPostalCommunities = this.model.getPostalCommunities()
+//        .stream()
+//        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
+//        .collect(toSet());
+//
+//    return this.model.getPoliticalCommunities()
+//        .stream()
+//        .filter(c -> !communityNumbersFromPostalCommunities.contains(c.getNumber()))
+//        .count();
+    return 0;
   }
 }

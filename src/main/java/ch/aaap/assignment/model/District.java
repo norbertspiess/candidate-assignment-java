@@ -8,7 +8,6 @@ public interface District {
 
   String getName();
 
-  Set<String> getCommunityNumbers();
+  Set<PoliticalCommunity> getPoliticalCommunities();
 
-  // TODO add more features here representing the relations
 }

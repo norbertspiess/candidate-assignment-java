@@ -8,10 +8,8 @@ import lombok.Data;
 @Builder
 public class DistrictImpl implements District {
 
-  private final String number;
-
-  private final String name;
-
-  private final Set<String> communityNumbers;
+  private String number;
+  private String name;
+  private Set<PoliticalCommunity> politicalCommunities;
 
 }

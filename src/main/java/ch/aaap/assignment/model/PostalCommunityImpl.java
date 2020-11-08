@@ -1,11 +1,12 @@
 package ch.aaap.assignment.model;
 
-import java.util.Set;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
 @Builder
+@EqualsAndHashCode
 public class PostalCommunityImpl implements PostalCommunity {
 
   private final String zipCode;
@@ -13,7 +14,5 @@ public class PostalCommunityImpl implements PostalCommunity {
   private final String zipCodeAddition;
 
   private final String name;
-
-  private final Set<String> politicalCommunityNumbers;
 
 }
