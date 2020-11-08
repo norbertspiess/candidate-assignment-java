@@ -1,7 +1,7 @@
 package ch.aaap.assignment;
 
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
 
 import ch.aaap.assignment.model.Canton;
@@ -18,10 +18,11 @@ import ch.aaap.assignment.raw.CSVPoliticalCommunity;
 import ch.aaap.assignment.raw.CSVPostalCommunity;
 import ch.aaap.assignment.raw.CSVUtil;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
 
 public class Application {
@@ -40,29 +41,26 @@ public class Application {
    * Reads the CSVs and initializes a in memory model
    */
   private void initModel() {
-    var politicalCommunities = CSVUtil.getPoliticalCommunities();
-    var postalCommunities = CSVUtil.getPostalCommunities();
+    var csvPoliticalCommunities = CSVUtil.getPoliticalCommunities();
+    var csvPostalCommunities = CSVUtil.getPostalCommunities();
 
-    var postalCommunitiesByPoliticalCommunity = postalCommunities
+    Map<String, Set<PostalCommunity>> postalCommunitiesByPoliticalCommunity = csvPostalCommunities
         .stream()
-        .collect(groupingBy(CSVPostalCommunity::getPoliticalCommunityNumber))
-        .entrySet()
-        .stream()
-        .collect(toMap(
-            Entry::getKey,
-            e -> e.getValue()
-                .stream()
-                .map(c -> PostalCommunityImpl.builder()
+        .collect(groupingBy(
+            CSVPostalCommunity::getPoliticalCommunityNumber,
+            mapping(c -> PostalCommunityImpl.builder()
                     .zipCode(c.getZipCode())
                     .zipCodeAddition(c.getZipCodeAddition())
                     .name(c.getName())
-                    .build())
-                .map(PostalCommunity.class::cast)
-                .collect(toSet())));
+                    .build(),
+                toSet())
+        ));
 
     var cantonsByCode = new HashMap<String, Canton>();
     var districtsByNumber = new HashMap<String, District>();
-    for (CSVPoliticalCommunity csvPoliticalCommunity : politicalCommunities) {
+    var politicalCommunities = new HashSet<PoliticalCommunity>();
+
+    for (CSVPoliticalCommunity csvPoliticalCommunity : csvPoliticalCommunities) {
       var matchingPostalCommunities = postalCommunitiesByPoliticalCommunity
           .getOrDefault(csvPoliticalCommunity.getNumber(), Collections.emptySet());
 
@@ -73,6 +71,7 @@ public class Application {
           .shortName(csvPoliticalCommunity.getShortName())
           .postalCommunities(matchingPostalCommunities)
           .build();
+      politicalCommunities.add(politicalCommunity);
 
       var district = districtsByNumber.getOrDefault(
           csvPoliticalCommunity.getDistrictNumber(),
@@ -95,7 +94,14 @@ public class Application {
       cantonsByCode.putIfAbsent(canton.getCode(), canton);
     }
 
-    this.model = new ModelImpl(cantonsByCode.values());
+    this.model = ModelImpl.builder()
+        .cantons(new HashSet<>(cantonsByCode.values()))
+        .districts(new HashSet<>(districtsByNumber.values()))
+        .politicalCommunities(politicalCommunities)
+        .postalCommunities(
+            postalCommunitiesByPoliticalCommunity.values().stream()
+                .flatMap(Collection::stream).collect(toSet()))
+        .build();
   }
 
   /**

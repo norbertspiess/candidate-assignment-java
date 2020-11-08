@@ -2,16 +2,19 @@ package ch.aaap.assignment.model;
 
 import java.util.Set;
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
+@Getter
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CantonImpl implements Canton {
 
-  private String code;
-  private String name;
-  private Set<District> districts;
+  @EqualsAndHashCode.Include
+  private final String code;
+
+  private final String name;
+
+  private final Set<District> districts;
 
 }
