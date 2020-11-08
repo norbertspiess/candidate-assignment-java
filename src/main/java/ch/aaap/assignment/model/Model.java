@@ -4,11 +4,12 @@ import java.util.Set;
 
 public interface Model {
 
-  public Set<PoliticalCommunity> getPoliticalCommunities();
+  Set<PoliticalCommunity> getPoliticalCommunities();
 
-  public Set<PostalCommunity> getPostalCommunities();
+  Set<PostalCommunity> getPostalCommunities();
 
-  public Set<Canton> getCantons();
+  Set<Canton> getCantons();
 
-  public Set<District> getDistricts();
+  Set<District> getDistricts();
+
 }

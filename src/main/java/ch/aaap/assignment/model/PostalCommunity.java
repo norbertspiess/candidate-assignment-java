@@ -2,11 +2,11 @@ package ch.aaap.assignment.model;
 
 public interface PostalCommunity {
 
-  public String getZipCode();
+  String getZipCode();
 
-  public String getZipCodeAddition();
+  String getZipCodeAddition();
 
-  public String getName();
+  String getName();
 
   // TODO add more features here representing the relations
 }
