@@ -1,5 +1,6 @@
 package ch.aaap.assignment.model;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Set;
@@ -24,15 +25,32 @@ public class ModelImpl implements Model {
         .map(c -> CantonImpl.builder()
             .code(c.getCantonCode())
             .name(c.getCantonName())
-            .build()
-        )
+            .build())
         .collect(toSet());
-    this.districts = this.politicalCommunities.stream()
-        .map(c -> DistrictImpl.builder()
-            .number(c.getDistrictNumber())
-            .name(c.getDistrictName())
-            .build()
-        )
+
+    this.districts = exractDistricts();
+  }
+
+  private Set<District> exractDistricts() {
+    var communitiesByDistrictNumber = this.politicalCommunities
+        .stream()
+        .collect(groupingBy(PoliticalCommunity::getDistrictNumber));
+    return communitiesByDistrictNumber
+        .entrySet().stream()
+        .map(district -> {
+          var districtNumber = district.getKey();
+          var districtName = district.getValue().get(0).getDistrictName();
+          var communityNumbers = district.getValue()
+              .stream()
+              .map(PoliticalCommunity::getNumber)
+              .collect(toSet());
+
+          return DistrictImpl.builder()
+              .number(districtNumber)
+              .name(districtName)
+              .communityNumbers(communityNumbers)
+              .build();
+        })
         .collect(toSet());
   }
 

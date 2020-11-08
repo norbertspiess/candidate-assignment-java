@@ -1,5 +1,6 @@
 package ch.aaap.assignment.model;
 
+import java.util.Set;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,6 +9,9 @@ import lombok.Data;
 public class DistrictImpl implements District {
 
   private final String number;
+
   private final String name;
+
+  private final Set<String> communityNumbers;
 
 }

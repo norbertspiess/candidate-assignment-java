@@ -1,5 +1,6 @@
 package ch.aaap.assignment;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
 import ch.aaap.assignment.model.Canton;
@@ -10,6 +11,7 @@ import ch.aaap.assignment.model.PoliticalCommunity;
 import ch.aaap.assignment.model.PoliticalCommunityImpl;
 import ch.aaap.assignment.model.PostalCommunity;
 import ch.aaap.assignment.model.PostalCommunityImpl;
+import ch.aaap.assignment.raw.CSVPostalCommunity;
 import ch.aaap.assignment.raw.CSVUtil;
 import java.time.LocalDate;
 import java.util.Set;
@@ -48,13 +50,27 @@ public class Application {
             .build())
         .collect(toSet());
 
-    Set<PostalCommunity> internalPostalCommunities = postalCommunities.stream()
-        .map(c -> PostalCommunityImpl
-            .builder()
-            .zipCode(c.getZipCode())
-            .zipCodeAddition(c.getZipCodeAddition())
-            .name(c.getName())
-            .build())
+    var postalCommunitiesByZipCode = postalCommunities
+        .stream().collect(groupingBy(c -> c.getZipCode() + c.getZipCodeAddition()));
+    Set<PostalCommunity> internalPostalCommunities = postalCommunitiesByZipCode.values()
+        .stream()
+        .map(communities -> {
+          var zipCode = communities.get(0).getZipCode();
+          var zipCodeAddition = communities.get(0).getZipCodeAddition();
+          var name = communities.get(0).getName();
+          var communityNumbers = communities
+              .stream()
+              .map(CSVPostalCommunity::getPoliticalCommunityNumber)
+              .collect(toSet());
+
+          return PostalCommunityImpl
+              .builder()
+              .zipCode(zipCode)
+              .zipCodeAddition(zipCodeAddition)
+              .name(name)
+              .politicalCommunityNumbers(communityNumbers)
+              .build();
+        })
         .collect(toSet());
 
     this.model = new ModelImpl(internalPoliticalCommunities, internalPostalCommunities);
@@ -133,8 +149,21 @@ public class Application {
    * @return district that belongs to specified zip code
    */
   public Set<String> getDistrictsForZipCode(String zipCode) {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    var communityNumbersForZipCode = this.model.getPostalCommunities()
+        .stream()
+        .filter(c -> c.getZipCode().equals(zipCode))
+        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
+        .collect(toSet());
+
+    return this.model.getDistricts()
+        .stream()
+        .filter(district -> doIntersect(district.getCommunityNumbers(), communityNumbersForZipCode))
+        .map(District::getName)
+        .collect(toSet());
+  }
+
+  private boolean doIntersect(Set<String> set1, Set<String> set2) {
+    return set2.stream().anyMatch(set1::contains);
   }
 
   /**
