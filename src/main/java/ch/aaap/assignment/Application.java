@@ -110,25 +110,15 @@ public class Application {
    * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfPoliticalCommunitiesInCanton(String cantonCode) {
-//    rejectInvalidCantonCode(cantonCode);
-//    return model.getCantons()
-//        .stream()
-//        .filter(c -> c.getCode().equals(cantonCode))
-//        .flatMap(c -> c.getDistricts().stream())
-//        .mapToLong(d -> d.getPoliticalCommunities().size())
-//        .sum();
-    return 0;
-  }
-
-  private void rejectInvalidCantonCode(String cantonCode) {
-    var isUnknownCantonCode = model.getCantons()
+    return model.getCantons()
         .stream()
-        .map(Canton::getCode)
-        .noneMatch(c -> c.equals(cantonCode));
-
-    if (isUnknownCantonCode) {
-      throw new IllegalArgumentException("invalid canton code: " + cantonCode);
-    }
+        .filter(c -> c.getCode().equals(cantonCode))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("invalid canton code: " + cantonCode))
+        .getDistricts()
+        .stream()
+        .mapToLong(d -> d.getPoliticalCommunities().size())
+        .sum();
   }
 
   /**
