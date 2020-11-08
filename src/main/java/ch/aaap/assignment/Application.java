@@ -200,7 +200,14 @@ public class Application {
    * @return amount of political communities without postal communities
    */
   public long getAmountOfPoliticalCommunityWithoutPostalCommunities() {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    var communityNumbersFromPostalCommunities = this.model.getPostalCommunities()
+        .stream()
+        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
+        .collect(toSet());
+
+    return this.model.getPoliticalCommunities()
+        .stream()
+        .filter(c -> !communityNumbersFromPostalCommunities.contains(c.getNumber()))
+        .count();
   }
 }
