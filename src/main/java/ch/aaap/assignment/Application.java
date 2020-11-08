@@ -127,12 +127,13 @@ public class Application {
    * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfDistrictsInCanton(String cantonCode) {
-    rejectInvalidCantonCode(cantonCode);
-
     return this.model.getCantons()
         .stream()
         .filter(c -> c.getCode().equals(cantonCode))
-        .mapToLong(c -> c.getDistricts().size()).sum();
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("invalid canton code: " + cantonCode))
+        .getDistricts()
+        .size();
   }
 
   /**
