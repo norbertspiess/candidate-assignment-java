@@ -145,7 +145,8 @@ public class Application {
         .stream()
         .filter(d -> d.getNumber().equals(districtNumber))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("invalid district number: " + districtNumber))
+        .orElseThrow(
+            () -> new IllegalArgumentException("invalid district number: " + districtNumber))
         .getPoliticalCommunities()
         .size();
   }
@@ -155,22 +156,14 @@ public class Application {
    * @return district that belongs to specified zip code
    */
   public Set<String> getDistrictsForZipCode(String zipCode) {
-//    var communityNumbersForZipCode = this.model.getPostalCommunities()
-//        .stream()
-//        .filter(c -> c.getZipCode().equals(zipCode))
-//        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
-//        .collect(toSet());
-//
-//    return this.model.getDistricts()
-//        .stream()
-//        .filter(district -> doIntersect(district.getCommunityNumbers(), communityNumbersForZipCode))
-//        .map(District::getName)
-//        .collect(toSet());
-    return Set.of();
-  }
-
-  private boolean doIntersect(Set<String> set1, Set<String> set2) {
-    return set2.stream().anyMatch(set1::contains);
+    return this.model.getDistricts()
+        .stream()
+        .filter(d -> d.getPoliticalCommunities().stream()
+            .anyMatch(political -> political
+                .getPostalCommunities().stream()
+                .anyMatch(postal -> postal.getZipCode().equals(zipCode))))
+        .map(District::getName)
+        .collect(toSet());
   }
 
   /**
