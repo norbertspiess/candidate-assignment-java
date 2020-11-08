@@ -72,9 +72,7 @@ public class Application {
    * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfPoliticalCommunitiesInCanton(String cantonCode) {
-    if (model.getCantons().stream().map(Canton::getCode).noneMatch(c -> c.equals(cantonCode))) {
-      throw new IllegalArgumentException("invalid canton code: " + cantonCode);
-    }
+    rejectInvalidCantonCode(cantonCode);
 
     return model.getPoliticalCommunities()
         .stream()
@@ -82,13 +80,26 @@ public class Application {
         .count();
   }
 
+  private void rejectInvalidCantonCode(String cantonCode) {
+    if (model.getCantons().stream().map(Canton::getCode).noneMatch(c -> c.equals(cantonCode))) {
+      throw new IllegalArgumentException("invalid canton code: " + cantonCode);
+    }
+  }
+
   /**
    * @param cantonCode of a canton (e.g. ZH)
    * @return amount of districts in given canton
+   * @throws IllegalArgumentException on unknown canton code
    */
   public long getAmountOfDistrictsInCanton(String cantonCode) {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    rejectInvalidCantonCode(cantonCode);
+
+    return model.getPoliticalCommunities()
+        .stream()
+        .filter(c -> cantonCode.equals(c.getCantonCode()))
+        .map(PoliticalCommunity::getDistrictNumber)
+        .distinct()
+        .count();
   }
 
   /**
