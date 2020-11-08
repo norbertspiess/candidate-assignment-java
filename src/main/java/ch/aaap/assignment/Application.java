@@ -199,15 +199,9 @@ public class Application {
    * @return amount of political communities without postal communities
    */
   public long getAmountOfPoliticalCommunityWithoutPostalCommunities() {
-//    var communityNumbersFromPostalCommunities = this.model.getPostalCommunities()
-//        .stream()
-//        .flatMap(c -> c.getPoliticalCommunityNumbers().stream())
-//        .collect(toSet());
-//
-//    return this.model.getPoliticalCommunities()
-//        .stream()
-//        .filter(c -> !communityNumbersFromPostalCommunities.contains(c.getNumber()))
-//        .count();
-    return 0;
+    return this.model.getPoliticalCommunities()
+        .parallelStream()
+        .filter(p -> p.getPostalCommunities().isEmpty())
+        .count();
   }
 }
