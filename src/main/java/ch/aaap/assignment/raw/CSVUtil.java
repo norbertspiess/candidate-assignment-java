@@ -23,7 +23,8 @@ public class CSVUtil {
   private static final String POLITICAL_COMMUNITY_FILE = "/GDE_from_be-b-00.04-agv-01.xlsx.csv";
   private static final String POSTAL_COMMUNITY_FILE = "/PLZ6_from_do-t-09.02-gwr-37.xlsx.csv";
 
-  private CSVUtil() {}
+  private CSVUtil() {
+  }
 
   public static Set<CSVPoliticalCommunity> getPoliticalCommunities() {
     try {

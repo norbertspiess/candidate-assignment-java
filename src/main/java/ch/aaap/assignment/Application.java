@@ -19,7 +19,9 @@ public class Application {
     new Application();
   }
 
-  /** Reads the CSVs and initializes a in memory model */
+  /**
+   * Reads the CSVs and initializes a in memory model
+   */
   private void initModel() {
     Set<CSVPoliticalCommunity> politicalCommunities = CSVUtil.getPoliticalCommunities();
     Set<CSVPostalCommunity> postalCommunities = CSVUtil.getPostalCommunities();
@@ -27,7 +29,10 @@ public class Application {
     // TODO implementation
     throw new RuntimeException("Not yet implemented");
   }
-  /** @return model */
+
+  /**
+   * @return model
+   */
   public Model getModel() {
     return model;
   }
