@@ -170,8 +170,19 @@ public class Application {
    */
   public LocalDate getLastUpdateOfPoliticalCommunityByPostalCommunityName(
       String postalCommunityName) {
-    // TODO implementation
-    throw new RuntimeException("Not yet implemented");
+    var postalCommunity = this.model.getPostalCommunities()
+        .stream()
+        .filter(c -> c.getName().equals(postalCommunityName))
+        .findAny()
+        .orElseThrow(() -> new IllegalArgumentException(
+            "unknown postal community name: " + postalCommunityName));
+
+    return this.model.getPoliticalCommunities()
+        .stream()
+        .filter(c -> postalCommunity.getPoliticalCommunityNumbers().contains(c.getNumber()))
+        .map(PoliticalCommunity::getLastUpdate)
+        .findAny()
+        .orElseThrow();
   }
 
   /**
