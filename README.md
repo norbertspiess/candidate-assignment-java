@@ -35,6 +35,11 @@ Fromat your source code additions according [Google Style Guide for Java](https:
 
 ### :memo: Assignment 5
 When looking at the 2 CSV's, describe some other "interesting" facts you get out of your data set's.
+- the plz 1004-0 has the most postal contribution to the political community of Lausanne
+- Lausanne has 18 plz in total
+- the district of "Bezirk Affoltern" has 21 postal communities, which one 
+- the district "Verwaltungskreis Bern-Mittelland" has the most postal communities overall with 166
+- ...
 
 ## Hand in the assignment :shipit:
 If you are happy with your solution and all provided tests are passing please create a new pull request. Please put your full name in the PR comment, so we can map it to your application.
