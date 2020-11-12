@@ -8,4 +8,6 @@ public interface PostalCommunity {
 
   String getName();
 
+  PoliticalCommunity getPoliticalCommunity();
+
 }

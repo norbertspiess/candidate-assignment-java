@@ -5,6 +5,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -20,6 +21,7 @@ public class PoliticalCommunityImpl implements PoliticalCommunity {
 
   private final LocalDate lastUpdate;
 
-  private final Set<PostalCommunity> postalCommunities;
+  @Setter
+  private Set<PostalCommunity> postalCommunities;
 
 }

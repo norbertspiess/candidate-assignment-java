@@ -1,5 +1,6 @@
 package ch.aaap.assignment;
 
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
@@ -19,10 +20,8 @@ import ch.aaap.assignment.raw.CSVPostalCommunity;
 import ch.aaap.assignment.raw.CSVUtil;
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class Application {
@@ -44,7 +43,7 @@ public class Application {
     var csvPoliticalCommunities = CSVUtil.getPoliticalCommunities();
     var csvPostalCommunities = CSVUtil.getPostalCommunities();
 
-    Map<String, Set<PostalCommunity>> postalCommunitiesByPoliticalCommunity = csvPostalCommunities
+    var postalCommunitiesByPoliticalCommunity = csvPostalCommunities
         .stream()
         .collect(groupingBy(
             CSVPostalCommunity::getPoliticalCommunityNumber,
@@ -61,16 +60,22 @@ public class Application {
     var politicalCommunities = new HashSet<PoliticalCommunity>();
 
     for (CSVPoliticalCommunity csvPoliticalCommunity : csvPoliticalCommunities) {
-      var matchingPostalCommunities = postalCommunitiesByPoliticalCommunity
-          .getOrDefault(csvPoliticalCommunity.getNumber(), Collections.emptySet());
-
       var politicalCommunity = PoliticalCommunityImpl.builder()
           .name(csvPoliticalCommunity.getName())
           .lastUpdate(csvPoliticalCommunity.getLastUpdate())
           .number(csvPoliticalCommunity.getNumber())
           .shortName(csvPoliticalCommunity.getShortName())
-          .postalCommunities(matchingPostalCommunities)
           .build();
+
+      politicalCommunity.setPostalCommunities(
+          postalCommunitiesByPoliticalCommunity
+              .getOrDefault(politicalCommunity.getNumber(), emptySet())
+              .stream()
+              .peek(p -> p.setPoliticalCommunity(politicalCommunity))
+              .map(PostalCommunity.class::cast)
+              .collect(toSet())
+      );
+
       politicalCommunities.add(politicalCommunity);
 
       var district = districtsByNumber.getOrDefault(
@@ -179,15 +184,15 @@ public class Application {
    */
   public LocalDate getLastUpdateOfPoliticalCommunityByPostalCommunityName(
       String postalCommunityName) {
-    return this.model.getPoliticalCommunities()
+    return this.model.getPostalCommunities()
         .stream()
-        .filter(political -> political.getPostalCommunities().stream()
-            .anyMatch(postal -> postal.getName().equals(postalCommunityName)))
-        .map(PoliticalCommunity::getLastUpdate)
+        .filter(postal -> postal.getName().equals(postalCommunityName))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException(
             "no matching political community found for postal community name: "
-                + postalCommunityName));
+                + postalCommunityName))
+        .getPoliticalCommunity()
+        .getLastUpdate();
   }
 
   /**
