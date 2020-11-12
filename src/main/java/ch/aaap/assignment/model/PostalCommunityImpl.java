@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Builder
-@EqualsAndHashCode
+@EqualsAndHashCode(of = {"zipCode", "zipCodeAddition"})
 public class PostalCommunityImpl implements PostalCommunity {
 
   private final String zipCode;

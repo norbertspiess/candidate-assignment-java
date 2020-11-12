@@ -9,10 +9,9 @@ import lombok.Setter;
 
 @Getter
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = {"number"})
 public class PoliticalCommunityImpl implements PoliticalCommunity {
 
-  @EqualsAndHashCode.Include
   private final String number;
 
   private final String name;

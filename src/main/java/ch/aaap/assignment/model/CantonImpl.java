@@ -7,10 +7,9 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = {"code"})
 public class CantonImpl implements Canton {
 
-  @EqualsAndHashCode.Include
   private final String code;
 
   private final String name;
